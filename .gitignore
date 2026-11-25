@@ -8,3 +8,6 @@ node_modules
 !.env.example
 drizzle/meta/
 *.log
+
+# Override global gitignores (e.g. Python's `lib/`) that would hide SvelteKit's src/lib
+!src/lib/
