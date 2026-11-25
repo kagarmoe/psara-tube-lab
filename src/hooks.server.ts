@@ -4,6 +4,7 @@ import {
 	isAdminOrCurator,
 	isDemoModeEnabled
 } from '$lib/server/auth';
+import { DEMO_READ_ONLY_MESSAGE, isDemoAdminApiBlocked } from '$lib/shared/demo-guard';
 
 const PUBLIC_PATHS = ['/login', '/api/health', '/api/auth/logout', '/api/auth/demo-switch'];
 
@@ -46,6 +47,13 @@ export const handle: Handle = async ({ event, resolve }) => {
 				});
 			}
 			throw redirect(303, '/?notice=admin-required');
+		}
+
+		if (isDemoAdminApiBlocked(session, pathname)) {
+			return new Response(JSON.stringify({ error: DEMO_READ_ONLY_MESSAGE }), {
+				status: 403,
+				headers: { 'content-type': 'application/json' }
+			});
 		}
 	}
 
