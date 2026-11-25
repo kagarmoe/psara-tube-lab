@@ -105,19 +105,8 @@ export function clearSessionCookie(cookies: Cookies): void {
 }
 
 export function getSessionFromCookies(cookies: Cookies): SessionUser | null {
-	const existing = verifySessionToken(cookies.get(SESSION_COOKIE_NAME));
-	if (existing) return existing;
-
-	if (isDemoModeEnabled()) {
-		return {
-			username: 'demo-member',
-			displayName: 'Demo Club Member',
-			role: 'member',
-			authMethod: 'demo'
-		};
-	}
-
-	return null;
+	// No implicit demo session: first-time visitors land on /login and choose a demo role there.
+	return verifySessionToken(cookies.get(SESSION_COOKIE_NAME));
 }
 
 export async function authenticateAccount(

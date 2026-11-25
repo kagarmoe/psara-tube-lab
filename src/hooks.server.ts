@@ -32,8 +32,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 					headers: { 'content-type': 'application/json' }
 				});
 			}
-			const nextParam = encodeURIComponent(pathname + event.url.search);
-			throw redirect(303, `/login?next=${nextParam}`);
+			const next = pathname + event.url.search;
+			throw redirect(303, next === '/' ? '/login' : `/login?next=${encodeURIComponent(next)}`);
 		}
 
 		if (
