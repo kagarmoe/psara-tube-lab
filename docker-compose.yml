@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: psara-tube-lab-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: psara
+      POSTGRES_PASSWORD: psara_dev
+      POSTGRES_DB: psara_tube_lab
+    ports:
+      - "5433:5432"
+    volumes:
+      - psara_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U psara -d psara_tube_lab"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  psara_pgdata:

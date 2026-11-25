@@ -1,13 +1,19 @@
-// See https://kit.svelte.dev/docs/types#app
-// for information about these interfaces
+export type UserRole = 'member' | 'curator' | 'admin';
+
+export interface SessionUser {
+	username: string;
+	displayName: string;
+	role: UserRole;
+	authMethod: 'passcode' | 'account' | 'demo';
+}
+
 declare global {
-  namespace App {
-    // interface Error {}
-    // interface Locals {}
-    // interface PageData {}
-    // interface PageState {}
-    // interface Platform {}
-  }
+	namespace App {
+		interface Locals {
+			session: SessionUser | null;
+			demoMode: boolean;
+		}
+	}
 }
 
 export {};

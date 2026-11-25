@@ -1,35 +1,90 @@
-# sveltekit
+# PSARA Tube Lab
 
-This repo contains code for a SvelteKit application generated using the [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte) package.
+**PSARA Tube Lab** is a browser- and tablet-friendly vacuum tube inventory workbench, reference library, and unmarked-tube identification assistant built for the **Puget Sound Antique Radio Association (PSARA)**.
 
-To create your own SvelteKit project, you can either
+It replaces desktop-only Excel/VBA spreadsheets so club members can search over **5,400 tubes across 700+ reference types**, check pinout and envelope diagrams on their phone or bench laptop, build print-ready pull sheets, identify unmarked mystery tubes, and let club curators stage donations without duplicate imports.
 
-- [Create your own repo from this template](https://github.com/render-examples/sveltekit/generate) and modify it for your needs
-- Create a new SvelteKit project by following the [SvelteKit Getting Started Guide](https://kit.svelte.dev/docs) and then making a few small modifications as shown in [this commit](https://github.com/render-examples/sveltekit/commit/3ea50803f118da041745fd8cb51094972ac87f3c) to deploy it to Render as a Node.js service.
+---
 
-## Developing
+## Key Capabilities
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+- **Find a Tube (Accessible Club Search):**
+  - 4-tier ranked lookup (`Exact` → `Prefix` → `Substitutes` → `Family/Notes Keywords`) with live stock totals computed dynamically per physical box and layer.
+  - Strict quarantine of `Unidentified` records until verified by a curator.
+  - Direction-aware substitute warnings (enforcing one-way `Related replaces Original` rules so an older tube is never mistakenly substituted into a socket requiring the upgraded replacement).
+  - High-resolution **Basing / Pinout Diagrams** and **Envelope Outlines** (835 static reference PNGs), zoomable lightbox view, and a persistent **Inches (`in`) / Millimeters (`mm`)** unit toggle.
+- **Pull Sheets & Return Ledger:**
+  - Members reserve specific boxes/layers directly from tube pages, deduct stock inside atomic PostgreSQL transactions, print shop pick-lists, and log returns with updated test results (`Tested`, `Weak`, `Bad`) and condition (`NOS`, `Used`).
+- **Mystery Tube Helper:**
+  - 100% deterministic 5-stage physical identification checklist (`Pin Count`, `Base Socket`, `Top Cap`, `Envelope Silhouette`, `Diameter / Height`, `Filament Continuity` presets, and `Visible Electrodes`) ranking candidate tubes alongside inline trial pinouts.
+  - Optional progressive-enhancement **Photo Assist** drawer supporting runtime env vars (or per-session BYOK / local Ollama) with zero keys saved to the repo or database.
+- **Manage Inventory (Curator & Admin Workbench):**
+  - **Single Intake** with existing reference enrichment snapshots or automatic `TXXXX` reference creation.
+  - **Batch Spreadsheet Import** (`.xlsx`, `.xlsm`, `.csv`, or pasted rows) detecting headers in rows 1–20 and preventing double-imports via `Source Signature` deduplication.
+  - **Review & Quarantine Queue**, **`?` Uncounted Lot & Split Audit**, **System Readiness Diagnostics**, and full multi-sheet **`.xlsx` Workbook Export**.
 
-```bash
-npm run dev
+---
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+## Tech Stack
 
-## Building
+- **Frontend / Server:** SvelteKit (Svelte 5 + TypeScript + Tailwind CSS v4 + `@sveltejs/adapter-node`)
+- **Database:** PostgreSQL (`drizzle-orm` + `drizzle-kit` + `postgres`)
+- **Spreadsheet I/O:** `exceljs`, `jszip`, `fast-xml-parser`
+- **Hosting:** Render.com Blueprint ([render.yaml](render.yaml)) + local Docker Compose Postgres ([docker-compose.yml](docker-compose.yml))
 
-```bash
-npm run build
-```
+---
 
-> You can preview the built app with `npm run preview`. This should _not_ be used to serve your app in production.
+## Security & Zero-PII Design
+
+- No member names, phone numbers, email addresses, or directory rosters live in this repository or database.
+- Individual curator/admin passwords are `scrypt`-hashed and seeded from runtime environment variables (`ADMIN_USERNAME`, `ADMIN_PASSWORD`), alongside a shared club access code (`MEMBER_ACCESS_CODE`) and optional `DEMO_MODE=true` role switcher for portfolio visitors.
+- AI keys are never committed or stored on disk; optional runtime variables can be injected strictly in memory (for example via 1Password CLI `op run`).
+
+---
+
+## Local Development Setup
+
+### Prerequisites
+- Node.js 22+
+- Docker Desktop (for local PostgreSQL)
+
+### Run Locally
+
+1. **Copy environment template:**
+   ```bash
+   cp .env.example .env
+   ```
+2. **Install dependencies & start PostgreSQL (exposed on port `5433` to avoid conflicting with local Postgres on `5432`):**
+   ```bash
+   npm install
+   docker compose up -d
+   ```
+3. **Push Drizzle schema and load the seeded club catalog:**
+   ```bash
+   npm run db:push
+   npm run seed:db
+   ```
+4. **Start the dev server:**
+   ```bash
+   npm run dev
+   ```
+5. **Run verification checks:**
+   ```bash
+   npm test
+   npm run check
+   npm run build
+   ```
+
+---
 
 ## Deploying to Render
 
-Follow the deploy instructions at https://render.com/docs/deploy-sveltekit or click the button below:
+This repository includes a Render Blueprint in [render.yaml](render.yaml) that provisions the Node web service and managed PostgreSQL database:
 
-<a href="https://render.com/deploy" referrerpolicy="no-referrer-when-downgrade" rel="nofollow">
-  <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" />
-</a>
+1. Push your branch to GitHub (`main`).
+2. In the Render Dashboard, choose **New + -> Blueprint** (or sync the existing Blueprint) and connect this repository.
+3. Fill in the prompted environment secrets:
+   - `MEMBER_ACCESS_CODE` (shared passcode for club members)
+   - `ADMIN_PASSWORD` (password for the seeded curator/admin user `ADMIN_USERNAME`, default `marc`)
+4. Render automatically runs `drizzle-kit push --force`, runs the idempotent `seed:db` script against `seed/psara_seed.json`, and checks `GET /api/health`.
+5. For real club production use (once ready), set `DEMO_MODE="false"` in the Render Dashboard Environment tab so sign-in is required.
