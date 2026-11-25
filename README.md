@@ -83,8 +83,8 @@ This repository includes a Render Blueprint in [render.yaml](render.yaml) that p
 
 1. Push your branch to GitHub (`main`).
 2. In the Render Dashboard, choose **New + -> Blueprint** (or sync the existing Blueprint) and connect this repository.
-3. Fill in the prompted environment secrets:
+3. Fill in the prompted environment variables:
    - `MEMBER_ACCESS_CODE` (shared passcode for club members)
-   - `ADMIN_PASSWORD` (password for the seeded curator/admin user `ADMIN_USERNAME`, default `marc`)
+   - `ADMIN_USERNAME` and `ADMIN_PASSWORD` (credentials for the initial seeded curator/admin user)
 4. Render automatically runs `drizzle-kit push --force`, runs the idempotent `seed:db` script against `seed/psara_seed.json`, and checks `GET /api/health`.
 5. For real club production use (once ready), set `DEMO_MODE="false"` in the Render Dashboard Environment tab so sign-in is required.
