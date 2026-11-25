@@ -120,10 +120,13 @@
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({ status, resolutionNotes: item.resolutionNotes })
 			});
-			if (res.ok) {
-				feedback = { ok: true, text: `Review item #${item.id} marked ${status}.` };
-				await invalidateAll();
+			if (!res.ok) {
+				const payload = await res.json().catch(() => ({}));
+				feedback = { ok: false, text: payload.error ?? 'Could not update review item.' };
+				return;
 			}
+			feedback = { ok: true, text: `Review item #${item.id} marked ${status}.` };
+			await invalidateAll();
 		} finally {
 			busy = false;
 		}

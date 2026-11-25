@@ -1,5 +1,6 @@
 import { json, redirect } from '@sveltejs/kit';
 import { isDemoModeEnabled, isHttpsRequest, setSessionCookie } from '$lib/server/auth';
+import { demoSwitchRedirect } from '$lib/shared/demo-guard';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ cookies, request, url }) => {
@@ -23,6 +24,5 @@ export const POST: RequestHandler = async ({ cookies, request, url }) => {
 		isHttpsRequest(request, url)
 	);
 
-	const safeRedirect = redirectTo.startsWith('/') ? redirectTo : '/';
-	throw redirect(303, safeRedirect);
+	throw redirect(303, demoSwitchRedirect(role, redirectTo));
 };

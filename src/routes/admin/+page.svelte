@@ -6,6 +6,7 @@
 
 	let { data }: { data: PageData } = $props();
 	let admin = $derived(data.adminData);
+	let readOnly = $derived(data.session?.authMethod === 'demo');
 
 	type AdminTab = 'intake' | 'batch' | 'review' | 'splits' | 'diagnostics';
 	let activeTab = $state<AdminTab>('intake');
@@ -124,10 +125,13 @@
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({ quantity: qty, quantityUnknown: false })
 			});
-			if (res.ok) {
-				feedback = { ok: true, text: `Updated lot #${lotId} count to ${qty}.` };
-				await invalidateAll();
+			if (!res.ok) {
+				const payload = await res.json().catch(() => ({}));
+				feedback = { ok: false, text: payload.error ?? 'Could not update lot.' };
+				return;
 			}
+			feedback = { ok: true, text: `Updated lot #${lotId} count to ${qty}.` };
+			await invalidateAll();
 		} finally {
 			busy = false;
 		}
@@ -148,12 +152,15 @@
 					description: newLocDesc
 				})
 			});
-			if (res.ok) {
-				feedback = { ok: true, text: `Added location "${newLocCode}".` };
-				newLocCode = '';
-				newLocDesc = '';
-				await invalidateAll();
+			if (!res.ok) {
+				const payload = await res.json().catch(() => ({}));
+				feedback = { ok: false, text: payload.error ?? 'Could not add location.' };
+				return;
 			}
+			feedback = { ok: true, text: `Added location "${newLocCode}".` };
+			newLocCode = '';
+			newLocDesc = '';
+			await invalidateAll();
 		} finally {
 			busy = false;
 		}
@@ -174,13 +181,37 @@
 				</h1>
 			</div>
 
-			<a
-				href="/api/admin/export/xlsx"
-				class="inline-flex min-h-12 items-center rounded-xl bg-emerald-800 px-5 py-2.5 text-base font-bold text-white hover:bg-emerald-900"
-			>
-				Export Full .XLSX Workbook
-			</a>
+			{#if readOnly}
+				<button
+					type="button"
+					disabled
+					class="inline-flex min-h-12 cursor-not-allowed items-center rounded-xl bg-stone-300 px-5 py-2.5 text-base font-bold text-stone-600"
+				>
+					Export Full .XLSX Workbook
+				</button>
+			{:else}
+				<a
+					href="/api/admin/export/xlsx"
+					class="inline-flex min-h-12 items-center rounded-xl bg-emerald-800 px-5 py-2.5 text-base font-bold text-white hover:bg-emerald-900"
+				>
+					Export Full .XLSX Workbook
+				</a>
+			{/if}
 		</div>
+
+		{#if readOnly}
+			<div
+				role="note"
+				class="mt-5 rounded-xl border-2 border-amber-800 bg-amber-50 p-4 text-base text-amber-950"
+			>
+				<p class="font-bold">You're viewing the Demo Admin workbench (read-only).</p>
+				<p class="mt-1">
+					Exporting the workbook and changing inventory are turned off in demo mode. To make
+					changes, <a href="/login?next=/admin" class="font-bold underline">sign in</a> with a
+					curator or admin account.
+				</p>
+			</div>
+		{/if}
 
 		<!-- Admin Sub-Tabs -->
 		<nav aria-label="Admin tools" class="mt-5 flex flex-wrap gap-2">

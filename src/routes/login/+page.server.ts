@@ -7,6 +7,7 @@ import {
 	setSessionCookie,
 	verifySharedPasscode
 } from '$lib/server/auth';
+import { demoSwitchRedirect, safeRedirectPath } from '$lib/shared/demo-guard';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -42,7 +43,7 @@ export const actions: Actions = {
 			isHttpsRequest(request, url)
 		);
 
-		throw redirect(303, next.startsWith('/') ? next : '/');
+		throw redirect(303, safeRedirectPath(next));
 	},
 
 	admin: async ({ request, cookies, url }) => {
@@ -59,7 +60,7 @@ export const actions: Actions = {
 		}
 
 		setSessionCookie(cookies, user, isHttpsRequest(request, url));
-		throw redirect(303, next.startsWith('/') ? next : '/');
+		throw redirect(303, safeRedirectPath(next));
 	},
 
 	demo: async ({ request, cookies, url }) => {
@@ -81,6 +82,6 @@ export const actions: Actions = {
 			isHttpsRequest(request, url)
 		);
 
-		throw redirect(303, next.startsWith('/') ? next : '/');
+		throw redirect(303, demoSwitchRedirect(role, next));
 	}
 };
